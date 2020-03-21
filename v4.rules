@@ -1,1 +1,37 @@
+# Clear
+iptables -F
+iptables -X
 
+# Drop all
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+iptables -P FORWARD DROP
+
+# localhost loopback
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+# DNS
+iptables -A OUTPUT -p udp --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT -p udp --sport 53 -m state --state ESTABLISHED -j ACCEPT
+iptables -A INPUT -p tcp --sport 53 -m state --state ESTABLISHED -j ACCEPT
+
+# Web  
+iptables -A OUTPUT -p tcp -m multiport --dports 80,443 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT -p tcp -m multiport --sports 80,443 -m state --state ESTABLISHED -j ACCEPT
+
+# SSH
+iptables -A OUTPUT -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+
+# Logg
+iptables -N LOGGING
+iptables -A INPUT -j LOGGING
+iptables -A OUTPUT -j LOGGING
+iptables -A FORWARD -j LOGGING
+iptables -A LOGGING -m limit --limit 3/min -j LOG --log-prefix "iptables4 : " --log-level 7
+iptables -A LOGGING -j DROP
+
+#display
+#iptables -L -v --line-number
